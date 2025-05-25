@@ -8,20 +8,13 @@ import (
 var log *slog.Logger
 
 type LogCfg struct {
-	env string
+	Env string
 }
 
-// To implement a logger, we want to create a handler, and then create logger using New.
-// For dev, we will create our own handler.
-// For this, 3 methods are important.
-// Enabled -> To log only till mentioned level.
-// Handle -> Actually format the log.
-// WithAttrs()
-// WithGroup()
-
+// Initialize the logger instance, and define handler as per cfg.
 func Init(cfg LogCfg) {
 	var handler slog.Handler
-	if cfg.env == "prod" {
+	if cfg.Env == "prod" {
 		handler = slog.NewJSONHandler(os.Stdout, nil)
 	} else {
 		handler = NewDevHandler(os.Stdout, LOG_DEBUG)
@@ -31,16 +24,39 @@ func Init(cfg LogCfg) {
 
 }
 
+// Check whether logger is initialized or not.
+func isInitialized() bool {
+	return log != nil
+}
+
+// Log Info level log
 func Info(msg string, args ...any) {
+	if !isInitialized() {
+		panic("logger called before Initialize")
+	}
 	log.Info(msg, args...)
 }
 
+// Log Debug level log
 func Debug(msg string, args ...any) {
+	if !isInitialized() {
+		panic("logger called before Initialize")
+	}
 	log.Debug(msg, args...)
 }
+
+// Log Warning level log
 func Warn(msg string, args ...any) {
+	if !isInitialized() {
+		panic("logger called before Initialize")
+	}
 	log.Warn(msg, args...)
 }
+
+// Log Error level log
 func Error(msg string, args ...any) {
+	if !isInitialized() {
+		panic("logger called before Initialize")
+	}
 	log.Error(msg, args...)
 }
