@@ -23,8 +23,6 @@ type DevHandler struct {
 	writer io.Writer
 }
 
-var h slog.Handler
-
 func NewDevHandler(w io.Writer, level LogLevel) *DevHandler {
 	var logLevel slog.Level
 	switch level {
@@ -54,17 +52,22 @@ func (d *DevHandler) Enabled(_ context.Context, level slog.Level) bool {
 
 func (d *DevHandler) Handle(_ context.Context, r slog.Record) error {
 	var msg string
-	ts := r.Time.Format("12-06-2025 14:00:00")
+	ts := r.Time.Format("2006-01-02 15:04:05 ")
 	level := strings.ToUpper(r.Level.String())
 
 	if r.Level == slog.LevelError {
 		_, file, line, _ := runtime.Caller(4)
-		msg = fmt.Sprintf("%s [%s] %s - %s:%s", ts, level, r.Message, file, line)
+		msg = fmt.Sprintf("%s [%s] %s - %s:%d", ts, level, r.Message, file, line)
 	} else {
 		msg = fmt.Sprintf("%s [%s] %s", ts, level, r.Message)
 	}
 
-	_, err := fmt.Fprintf(d.writer, "%s %s", ts, msg)
+	r.Attrs(func(a slog.Attr) bool {
+		msg += fmt.Sprintf(" | %s=%v", a.Key, a.Value)
+		return true
+	})
+
+	_, err := fmt.Fprintf(d.writer, "%s", msg)
 	if err != nil {
 		return err
 	}
