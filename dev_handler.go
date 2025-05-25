@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"runtime"
 	"strings"
+	"sync"
 )
 
 type LogLevel int
@@ -21,6 +22,7 @@ const (
 type DevHandler struct {
 	level  slog.Level
 	writer io.Writer
+	mu     *sync.Mutex
 }
 
 func NewDevHandler(w io.Writer, level LogLevel) *DevHandler {
@@ -41,6 +43,7 @@ func NewDevHandler(w io.Writer, level LogLevel) *DevHandler {
 	return &DevHandler{
 		level:  logLevel,
 		writer: w,
+		mu:     &sync.Mutex{},
 	}
 
 }
@@ -51,6 +54,8 @@ func (d *DevHandler) Enabled(_ context.Context, level slog.Level) bool {
 }
 
 func (d *DevHandler) Handle(_ context.Context, r slog.Record) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	var msg string
 	ts := r.Time.Format("2006-01-02 15:04:05 ")
 	level := strings.ToUpper(r.Level.String())
@@ -63,7 +68,7 @@ func (d *DevHandler) Handle(_ context.Context, r slog.Record) error {
 	}
 
 	r.Attrs(func(a slog.Attr) bool {
-		msg += fmt.Sprintf(" %v", a.Value)
+		msg += fmt.Sprintf(" %s: %v", a.Key, a.Value)
 		return true
 	})
 
