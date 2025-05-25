@@ -63,11 +63,11 @@ func (d *DevHandler) Handle(_ context.Context, r slog.Record) error {
 	}
 
 	r.Attrs(func(a slog.Attr) bool {
-		msg += fmt.Sprintf(" | %s=%v", a.Key, a.Value)
+		msg += fmt.Sprintf(" %v", a.Value)
 		return true
 	})
 
-	_, err := fmt.Fprintf(d.writer, "%s", msg)
+	_, err := fmt.Fprintf(d.writer, "%s\n", msg)
 	if err != nil {
 		return err
 	}
