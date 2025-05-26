@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	log  *slog.Logger
-	once sync.Once
+	log *slog.Logger
+	mu  sync.Mutex
 )
 
 type LogCfg struct {
@@ -23,19 +23,28 @@ const (
 )
 
 // Initialize the logger instance, and define handler as per cfg.
-func Init(cfg LogCfg) {
+func Init(cfg LogCfg) error {
+	mu.Lock()
+	defer mu.Unlock()
+	var err error
+	var handler slog.Handler
 
-	once.Do(func() {
-		var handler slog.Handler
+	if isInitialized() {
+		return nil
+	}
 
-		if cfg.Env == PROD_ENV {
-			handler = slog.NewJSONHandler(cfg.Writer, nil)
-		} else {
-			handler = NewDevHandler(cfg.Writer, LOG_DEBUG)
-		}
+	switch cfg.Env {
+	case PROD_ENV:
+		handler = slog.NewJSONHandler(cfg.Writer, nil)
+	case DEV_ENV:
+		handler = NewDevHandler(cfg.Writer, LOG_DEBUG)
+	default:
+		err = fmt.Errorf("unsupported logger environment")
+		return err
+	}
 
-		log = slog.New(handler)
-	})
+	log = slog.New(handler)
+	return nil
 
 }
 
