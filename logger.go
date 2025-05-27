@@ -16,11 +16,24 @@ type LogCfg struct {
 	Env    string
 	Writer io.Writer
 }
+type LOG_ENV int
 
 const (
-	PROD_ENV = "Production"
-	DEV_ENV  = "Development"
+	PROD_ENV LOG_ENV = iota
+	DEV_ENV
 )
+
+func (l LOG_ENV) String() string {
+
+	switch l {
+	case PROD_ENV:
+		return "Production"
+	case DEV_ENV:
+		return "Development"
+	}
+	return "unknown env"
+
+}
 
 // Initialize the logger instance, and define handler as per cfg.
 func Init(cfg LogCfg) error {
@@ -34,9 +47,9 @@ func Init(cfg LogCfg) error {
 	}
 
 	switch cfg.Env {
-	case PROD_ENV:
+	case PROD_ENV.String():
 		handler = slog.NewJSONHandler(cfg.Writer, nil)
-	case DEV_ENV:
+	case DEV_ENV.String():
 		handler = NewDevHandler(cfg.Writer, LOG_DEBUG)
 	default:
 		err = fmt.Errorf("unsupported logger environment")
